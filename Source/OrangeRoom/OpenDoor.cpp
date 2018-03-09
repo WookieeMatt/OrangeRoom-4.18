@@ -1,6 +1,7 @@
 // Copyright 2018 Matt Rimler Leve by UA Asset Store
 
 #include "OpenDoor.h"
+//#include "Gameframework/Actor.h"
 
 
 // Sets default values for this component's properties
@@ -17,16 +18,21 @@ UOpenDoor::UOpenDoor()
 // Called when the game starts
 void UOpenDoor::BeginPlay()
 {
-	Super::BeginPlay();
+	Super::BeginPlay();	
 
-	// Find owning Actor
-	AActor* Owner = GetOwner();
+	Owner = GetOwner();
+	ActorThatOpens	= GetWorld()->GetFirstPlayerController()->GetPawn();
+}
 
-	//Create rotator
-	FRotator NewRotation = FRotator(0.0f, -90.0f, 0.0f);
+void UOpenDoor::OpenDoor()
+{
+	Owner->SetActorRotation(FRotator(0.0f, OpenAngle, 0.0f));
+}
 
+void UOpenDoor::CloseDoor()
+{
 	//Set rotation
-	Owner->SetActorRotation(NewRotation);
+	Owner->SetActorRotation(FRotator(0.0f, 0.0f, 0.0f));
 }
 
 
@@ -35,6 +41,18 @@ void UOpenDoor::TickComponent(float DeltaTime, ELevelTick TickType, FActorCompon
 {
 	Super::TickComponent(DeltaTime, TickType, ThisTickFunction);
 
-	// ...
+	// Poll trigger volume
+	if (PressurePlate->IsOverlappingActor(ActorThatOpens))
+		//if ActorThatOpens in volume then open door
+	{
+		OpenDoor();
+		LastDoorOpenTime = GetWorld()->GetTimeSeconds();
+	}
+
+	// check if time to close door
+	if (GetWorld()->GetTimeSeconds() - LastDoorOpenTime > DoorCloseDelay)
+	{
+		CloseDoor();
+	}
 }
 
