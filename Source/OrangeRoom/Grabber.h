@@ -4,6 +4,8 @@
 
 #include "CoreMinimal.h"
 #include "Components/ActorComponent.h"
+#include "PhysicsEngine/PhysicsHandleComponent.h"
+#include "Components/InputComponent.h"
 #include "Grabber.generated.h"
 
 
@@ -29,4 +31,10 @@ private:
 	// How far ahead can we reach in cm
 	float Reach = 100.f;
 	
+	UPhysicsHandleComponent* PhysicsHandle = nullptr;
+	
+	UInputComponent* InputComponent = nullptr;
+
+	//ray cast and grab within reach
+	void Grab();
 };
