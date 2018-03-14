@@ -3,6 +3,7 @@
 #include "Grabber.h"
 #include "Engine/World.h"
 #include "DrawDebugHelpers.h"
+#include "Components/PrimitiveComponent.h"
 #define OUT
 
 // Sets default values for this component's properties
@@ -63,31 +64,55 @@ void UGrabber::Grab()
 	UE_LOG(LogTemp, Warning, TEXT("Grab pressed"))
 
 		//LINE TRACE and see if reach any actors with physics body collision channel set
-		GetFirstPhysicsBodyInReach();
+	auto HitResult = GetFirstPhysicsBodyInReach();
+	auto ComponentToGrab = HitResult.GetComponent();
+	auto ActorHit = HitResult.GetActor();
 
 	///if we hit then attach a physics handle
-		//TODO attach physics handle
+	if (ActorHit)
+	{
+		// attach physics handle
+		PhysicsHandle->GrabComponent(
+			ComponentToGrab,
+			NAME_None,
+			ComponentToGrab->GetOwner()->GetActorLocation(), //grab location
+			true //allow rotation
+		);
+	}
 }
 
 void UGrabber::Release() 
 {
 	UE_LOG(LogTemp, Warning, TEXT("Grab released"))
-	//TODO Release physics handle
+		PhysicsHandle->ReleaseComponent();
 }
 
 // Called every frame
 void UGrabber::TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction)
 {
 	Super::TickComponent(DeltaTime, TickType, ThisTickFunction);
+	
+	/// Get player viewpoint this tick
+	FVector PlayerViewPointLocation;
+	FRotator PlayerViewPointRotation;
+	GetWorld()->GetFirstPlayerController()->GetPlayerViewPoint(
+		OUT PlayerViewPointLocation,
+		OUT PlayerViewPointRotation
+	);
+
+	FVector LineTraceEnd = PlayerViewPointLocation + PlayerViewPointRotation.Vector() * Reach;
 
 	// if the physics handle is attached
+	if (PhysicsHandle->GrabbedComponent)
+	{
 		// move object we are holding
-
+		PhysicsHandle->SetTargetLocation(LineTraceEnd);
+	}
 }
 
 const FHitResult UGrabber::GetFirstPhysicsBodyInReach()
 {
-	// Get player viewpoint this tick
+	/// Get player viewpoint this tick
 	FVector PlayerViewPointLocation;
 	FRotator PlayerViewPointRotation;
 	GetWorld()->GetFirstPlayerController()->GetPlayerViewPoint(
@@ -118,6 +143,6 @@ const FHitResult UGrabber::GetFirstPhysicsBodyInReach()
 
 
 	}
-	return FHitResult();
+	return Hit;
 }
 
